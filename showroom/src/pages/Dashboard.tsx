@@ -1,3 +1,5 @@
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { useGetDashboardStats, useGetRevenueChart, useGetRecentOrders, useGetTopProducts, useGetCategoryBreakdown } from "api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, ShoppingCart, Users, AlertTriangle } from "lucide-react";
@@ -5,12 +7,35 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { getAuthToken } from "@/lib/auth";
+import { API_BASE } from "@/lib/api";
+
+interface AuthMeResponse {
+  user: {
+    subscriptionStatus?: string;
+    subscriptionEndsAt?: string | null;
+  };
+}
+
+const authHeaders = () => {
+  const token = getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
   const { data: revenueData, isLoading: revenueLoading } = useGetRevenueChart({ months: 6 });
   const { data: recentOrders, isLoading: ordersLoading } = useGetRecentOrders({ limit: 5 });
   const { data: topProducts, isLoading: productsLoading } = useGetTopProducts({ limit: 5 });
+  const { data: me } = useQuery<AuthMeResponse>({
+    queryKey: ["auth-me"],
+    queryFn: async () => {
+      const response = await fetch(`${API_BASE}/api/auth/me`, { headers: authHeaders() });
+      if (!response.ok) throw new Error("Unable to load user");
+      return response.json();
+    },
+  });
 
   if (statsLoading || revenueLoading || ordersLoading || productsLoading) {
     return <div className="space-y-4"><Skeleton className="h-8 w-64" /><Skeleton className="h-[200px] w-full" /></div>;
@@ -22,6 +47,27 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">Overview of your showroom's performance.</p>
       </div>
+
+      {me?.user.subscriptionStatus !== "active" && (
+        <div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-medium">Subscription required</p>
+            <p className="text-sm text-muted-foreground">Dashboard is visible, but products and other features unlock after payment approval.</p>
+          </div>
+          <Button asChild>
+            <Link href="/pricing">View pricing</Link>
+          </Button>
+        </div>
+      )}
+
+      {me?.user.subscriptionStatus === "active" && me.user.subscriptionEndsAt && Math.ceil((new Date(me.user.subscriptionEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) <= 7 && (
+        <div className="flex flex-col gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-yellow-900 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium">Your subscription is ending soon. Renew now to avoid account suspension.</p>
+          <Button asChild variant="outline">
+            <Link href="/pricing">Renew</Link>
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <Card>

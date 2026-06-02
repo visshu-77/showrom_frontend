@@ -13,6 +13,7 @@ import {
   ChevronUp,
   Menu,
   X,
+  CreditCard,
 } from "lucide-react";
 import { getAuthToken, logout, clearAuthToken } from "@/lib/auth";
 import { useAuthContext } from "@/lib/auth-context";
@@ -26,11 +27,12 @@ const navigation = [
   { name: "Customers", href: "/customers", icon: Users },
   { name: "Billing", href: "/billing", icon: Receipt },
   { name: "Staff", href: "/staff", icon: UserCircle },
+  { name: "Pricing", href: "/pricing", icon: CreditCard },
 ];
 
 function useCurrentUser() {
   const token = getAuthToken();
-  const { data } = useQuery<{ user: { name: string; email: string } }>({
+  const { data } = useQuery<{ user: { name: string; email: string; subscriptionStatus?: string; subscriptionEndsAt?: string | null } }>({
     queryKey: ["auth-me"],
     queryFn: async () => {
       const r = await fetch(`${API_BASE}/api/auth/me`, {
@@ -51,6 +53,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const user = useCurrentUser();
+  const subscriptionStatus = user?.subscriptionStatus ?? "inactive";
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -84,7 +87,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
       {/* Logo */}
       <div className="flex items-center h-16 flex-shrink-0 px-4 bg-sidebar-primary/5">
         <span className="text-xl font-bold text-sidebar-foreground tracking-tight">
-          VoltEdge<span className="text-primary">.</span>
+          Dukaanix<span className="text-primary"></span>
         </span>
       </div>
 
@@ -156,7 +159,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
               {user?.name ?? "Loading…"}
             </p>
             <p className="text-xs text-sidebar-foreground/50 truncate">
-              {user?.email ?? ""}
+              {subscriptionStatus === "active" ? "Subscription active" : user?.email ?? ""}
             </p>
           </div>
           <ChevronUp

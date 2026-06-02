@@ -12,6 +12,9 @@ import Orders from "./pages/Orders";
 import Customers from "./pages/Customers";
 import Staff from "./pages/Staff";
 import Billing from "./pages/Billing";
+import Pricing from "./pages/Pricing";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import { getAuthToken, clearAuthToken } from "./lib/auth";
@@ -31,9 +34,15 @@ const queryClient = new QueryClient({
 function Router() {
   const [location, setLocation] = useLocation();
   const [authState, setAuthState] = useState<"loading" | "authenticated" | "unauthenticated">("loading");
+  const isAdminRoute = location.startsWith("/admin");
 
   // Run the token verification exactly once on mount — never on navigation.
   useEffect(() => {
+    if (isAdminRoute) {
+      setAuthState("unauthenticated");
+      return;
+    }
+
     const token = getAuthToken();
     if (!token) {
       setAuthState("unauthenticated");
@@ -59,18 +68,29 @@ function Router() {
 
     return () => abortController.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAdminRoute]);
 
   // Redirect-only effect — no network calls, runs when authState or location changes.
   useEffect(() => {
     if (authState === "loading") return;
+    if (isAdminRoute) return;
     if (authState === "unauthenticated" && location !== "/signin" && location !== "/signup") {
       setLocation("/signin");
     }
     if (authState === "authenticated" && (location === "/signin" || location === "/signup")) {
       setLocation("/");
     }
-  }, [authState, location, setLocation]);
+  }, [authState, isAdminRoute, location, setLocation]);
+
+  if (isAdminRoute) {
+    return (
+      <Switch>
+        <Route path="/admin/signin" component={AdminLogin} />
+        <Route path="/admin/dashboard" component={AdminDashboard} />
+        <Route component={AdminLogin} />
+      </Switch>
+    );
+  }
 
   if (authState === "loading") return null;
 
@@ -97,6 +117,7 @@ function Router() {
           <Route path="/customers" component={Customers} />
           <Route path="/staff" component={Staff} />
           <Route path="/billing" component={Billing} />
+          <Route path="/pricing" component={Pricing} />
           <Route component={NotFound} />
         </Switch>
       </AppLayout>

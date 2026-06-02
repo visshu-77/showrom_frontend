@@ -152,7 +152,7 @@ function PrintInvoice({ invoice }: { invoice: InvoiceDetail }) {
             <img src={invoice.logoUrl} alt="Invoice logo" className="max-h-16 max-w-44 object-contain" />
           ) : (
             <>
-              <h1 className="text-3xl font-bold text-gray-900">VoltEdge.</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Dukaanix</h1>
               <p className="text-gray-500 text-xs mt-1">Electronics Showroom</p>
             </>
           )}
@@ -239,7 +239,7 @@ function PrintInvoice({ invoice }: { invoice: InvoiceDetail }) {
           <p className="text-gray-600 text-sm">{invoice.notes}</p>
         </div>
       )}
-      <p className="text-center text-gray-400 text-xs mt-10">Thank you for your business — VoltEdge Electronics Showroom</p>
+      <p className="text-center text-gray-400 text-xs mt-10">Thank you for your business — Edge Electronics Showroom</p>
     </div>
   );
 }

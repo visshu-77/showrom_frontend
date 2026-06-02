@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
@@ -11,9 +11,13 @@ if (!Number.isInteger(port) || port <= 0) {
 }
 
 const basePath = process.env.BASE_PATH ?? "/";
+const envDir = path.resolve(import.meta.dirname, "..");
+const env = loadEnv(process.env.NODE_ENV ?? "development", envDir, "");
+const apiProxyTarget = env.VITE_API_BASE_URL || "https://showroom-backend-ei8o.onrender.com";
 
 export default defineConfig({
   base: basePath,
+  envDir,
   plugins: [
     react(),
     tailwindcss(),
@@ -37,7 +41,7 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       "/api": {
-        target: "https://showroom-backend-ei8o.onrender.com",
+        target: apiProxyTarget,
         changeOrigin: true,
       },
     },
